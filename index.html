@@ -24,7 +24,7 @@
       transition: background-color var(--transition), color var(--transition);
       display: grid; place-items: center;
     }
-    .wrap { width: 100%; max-width: 780px; padding: 24px; text-align: center; }
+    .wrap { width: 100%; max-width: 820px; padding: 24px; text-align: center; }
     header { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 28px; opacity: .95; }
     .logo {
       display: inline-flex; align-items: center; justify-content: center;
@@ -93,6 +93,7 @@
         <div class="btnRow">
           <button id="btnPfp" type="button">download pfp (400×400)</button>
           <button id="btnBanner" type="button">download banner (1500×500)</button>
+          <button id="btnBadge" type="button">download hex badge (1080×1080)</button>
         </div>
       </div>
       <div class="muted tiny fade" style="margin-top:14px;">Tip: type a new handle to recolor</div>
@@ -101,7 +102,7 @@
 
   <script>
     // ---------- Utils: handle → color (FNV-1a → HSL → HEX) ----------
-    const SALT = 'COLOR_ID_V1'; // поменяй при желании, чтобы цвета были уникальны для проекта
+    const SALT = 'COLOR_ID_V1'; // change if you want unique colors for your project
 
     function normHandle(h) {
       return (h || '')
@@ -123,9 +124,9 @@
     function handleToHSL(handle, salt = '') {
       const s = normHandle(handle) + salt;
       const h32 = fnv1a32(s);
-      const H = h32 % 360;               // оттенок 0..359
-      const S = 60 + ((h32 >>> 8) % 20); // 60..79% — сочный, но читабельный
-      const L = 52 + ((h32 >>> 16) % 8); // 52..59% — хорошо на светлом и тёмном
+      const H = h32 % 360;               // hue 0..359
+      const S = 60 + ((h32 >>> 8) % 20); // 60..79% — juicy but readable
+      const L = 52 + ((h32 >>> 16) % 8); // 52..59% — looks good on light/dark
       return { h: H, s: S, l: L };
     }
 
@@ -143,7 +144,7 @@
     }
 
     function pickTextColorForHsl(h, s, l) {
-      // рассчитываем контраст — чёрный/белый текст относительно фона
+      // choose black/white text on top of background for contrast
       let [r,g,b] = hslToRgb(h,s,l);
       [r,g,b] = [r,g,b].map(v => v/255);
       const lin = x => (x <= 0.03928 ? x/12.92 : Math.pow((x+0.055)/1.055, 2.4));
@@ -167,29 +168,34 @@
     const hexBox   = document.getElementById('hexBox');
     const btnPfp   = document.getElementById('btnPfp');
     const btnBanner= document.getElementById('btnBanner');
+    const btnBadge = document.getElementById('btnBadge');
+
+    let lastHsl = null; // store h,s,l for reuse
 
     function applyColorForHandle(handle) {
       const clean = normHandle(handle);
       if (!clean) return;
       const { hex, h, s, l } = hexFromHandle(clean);
+      lastHsl = {h,s,l, handle: clean, hex};
 
-      // перекрашиваем фон
+      // repaint background
       document.body.style.backgroundColor = hex;
 
-      // меняем цвет текста для контраста
+      // text color for contrast
       const fg = pickTextColorForHsl(h,s,l);
       document.documentElement.style.setProperty('--fg', fg);
       document.documentElement.style.setProperty('--bg', hex);
 
-      // обновляем подпись
+      // update label
       hexBox.textContent = `your hex is ${hex}`;
 
-      // показываем блок результата
+      // show result
       resultBox.style.display = 'flex';
 
-      // готовим генераторы скачиваний
+      // downloads
       btnPfp.onclick = () => downloadSolidPng(`${clean}_pfp_${hex.slice(1)}.png`, 400, 400, hex);
       btnBanner.onclick = () => downloadSolidPng(`${clean}_banner_${hex.slice(1)}.png`, 1500, 500, hex);
+      btnBadge.onclick = () => downloadHexBadge(`${clean}_hex_badge_${hex.slice(1)}.png`, 1080, 1080, hex, clean, h, s, l);
     }
 
     function downloadSolidPng(filename, w, h, hex) {
@@ -205,11 +211,73 @@
       canvas.remove();
     }
 
+    function downloadHexBadge(filename, w, h, hex, handleClean, hH, sH, lH) {
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      // background
+      ctx.fillStyle = hex;
+      ctx.fillRect(0,0,w,h);
+
+      // text color (black/white for contrast) using provided HSL
+      const textColor = pickTextColorForHsl(hH, sH, lH);
+
+      // lines
+      const line1 = "MY HEX IS";
+      const line2 = hex;
+      const handleTxt = '@' + handleClean;
+
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // big hex line (center)
+      const font2 = fitText(ctx, line2, w*0.82, 200, 64);
+      ctx.font = `800 ${font2}px Inter, system-ui, sans-serif`;
+      ctx.fillText(line2, w/2, h*0.58);
+
+      // top line "MY HEX IS" above
+      const font1 = Math.max(44, Math.round(font2 * 0.34));
+      ctx.font = `700 ${font1}px Inter, system-ui, sans-serif`;
+      ctx.globalAlpha = 0.95;
+      ctx.fillText(line1, w/2, h*0.38);
+      ctx.globalAlpha = 1;
+
+      // handle in top-left with nice padding
+      const pad = 56; // "красивый отступ"
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const handleMaxWidth = w * 0.7; // do not exceed 70% of width
+      const handleFont = fitText(ctx, handleTxt, handleMaxWidth, 80, 28);
+      ctx.font = `700 ${handleFont}px Inter, system-ui, sans-serif`;
+      ctx.fillText(handleTxt, pad, pad);
+
+      // download
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = filename;
+      a.click();
+      canvas.remove();
+    }
+
+    function fitText(ctx, text, maxWidth, maxPx, minPx) {
+      // binary search font size to fit width
+      let hi = maxPx, lo = minPx;
+      while (hi - lo > 1) {
+        const mid = Math.floor((hi + lo)/2);
+        ctx.font = `800 ${mid}px Inter, system-ui, sans-serif`;
+        const w = ctx.measureText(text).width;
+        if (w > maxWidth) hi = mid; else lo = mid;
+      }
+      return lo;
+    }
+
     function onSubmit() {
       const v = elHandle.value;
       if (!v.trim()) return;
       applyColorForHandle(v);
-      // прячем подсказку/инпут визуально (вводить можно снова)
+      // visually dim the input (you can type again to recolor)
       stepInput.style.opacity = .35;
     }
 
@@ -217,14 +285,14 @@
     elHandle.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') onSubmit();
       else {
-        // как только юзер печатает — снова показываем инпут ярче и скрываем результат
+        // while typing, re-enable input & hide result
         resultBox.style.display = 'none';
         stepInput.style.opacity = 1;
         document.body.style.backgroundColor = 'var(--bg)';
       }
     });
 
-    // опционально: поддержка deep-link ?handle=nick
+    // optional: deep-link support ?handle=nick
     const params = new URLSearchParams(location.search);
     if (params.has('handle')) {
       elHandle.value = params.get('handle');
