@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Color by Handle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #000000;
+      --fg: #ffffff;
+      --muted: #9ca3af;
+      --accent: #ffffff;
+      --transition: 260ms cubic-bezier(.2,.7,.2,1);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    html,body { height: 100%; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg); color: var(--fg);
+      transition: background-color var(--transition), color var(--transition);
+      display: grid; place-items: center;
+    }
+    .wrap { width: 100%; max-width: 780px; padding: 24px; text-align: center; }
+    header { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 28px; opacity: .95; }
+    .logo {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800; letter-spacing: .5px; padding: 8px 14px; border-radius: 999px;
+      background: rgba(255,255,255,.08); backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .card {
+      margin: 0 auto; padding: 18px; border-radius: var(--radius);
+      background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 40px rgba(0,0,0,.35); backdrop-filter: blur(8px);
+    }
+    .inputRow {
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+    }
+    input {
+      width: 100%; padding: 16px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06); color: var(--fg); font-size: 18px; outline: none;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    input::placeholder { color: rgba(255,255,255,.6); }
+    input:focus { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.1); }
+    button {
+      padding: 16px 18px; border-radius: 12px; border: 0; cursor: pointer;
+      background: var(--fg); color: var(--bg); font-weight: 800; font-size: 16px;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity var(--transition);
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    }
+    button:hover { transform: translateY(-1px); }
+    .muted { color: var(--muted); font-size: 14px; margin-top: 10px; }
+    .result { display: none; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .hex {
+      font-weight: 800; font-size: 28px; padding: 12px 16px; border-radius: 12px;
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    }
+    .btnRow { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .tiny { font-size: 12px; opacity: .8; }
+    .fade { opacity: .85; }
+
+    @media (max-width: 520px) {
+      .wrap { padding: 18px; }
+      .hex { font-size: 22px; }
+      button { width: 100%; }
+      .inputRow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">yourlogo</div>
+    </header>
+
+    <div id="stepInput" class="card" role="group" aria-label="Enter twitter handle">
+      <div class="inputRow">
+        <input id="handle" type="text" inputmode="text" autocomplete="off" spellcheck="false"
+               placeholder="enter your twitter nickname" aria-label="twitter nickname"/>
+        <button id="goBtn" type="button" aria-label="go">→</button>
+      </div>
+      <div class="muted">Press Enter or click →</div>
+    </div>
+
+    <div id="stepResult" class="card" style="margin-top:20px;">
+      <div class="result">
+        <div id="hexBox" class="hex">your hex is #______</div>
+        <div class="btnRow">
+          <button id="btnPfp" type="button">download pfp (400×400)</button>
+          <button id="btnBanner" type="button">download banner (1500×500)</button>
+        </div>
+      </div>
+      <div class="muted tiny fade" style="margin-top:14px;">Tip: type a new handle to recolor</div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Utils: handle → color (FNV-1a → HSL → HEX) ----------
+    const SALT = 'COLOR_ID_V1'; // поменяй при желании, чтобы цвета были уникальны для проекта
+
+    function normHandle(h) {
+      return (h || '')
+        .trim()
+        .normalize('NFKC')
+        .replace(/^@+/, '')
+        .toLowerCase();
+    }
+
+    function fnv1a32(str) {
+      let h = 0x811c9dc5 >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 0x01000193) >>> 0;
+      }
+      return h >>> 0;
+    }
+
+    function handleToHSL(handle, salt = '') {
+      const s = normHandle(handle) + salt;
+      const h32 = fnv1a32(s);
+      const H = h32 % 360;               // оттенок 0..359
+      const S = 60 + ((h32 >>> 8) % 20); // 60..79% — сочный, но читабельный
+      const L = 52 + ((h32 >>> 16) % 8); // 52..59% — хорошо на светлом и тёмном
+      return { h: H, s: S, l: L };
+    }
+
+    function hslToRgb(h, s, l) {
+      s /= 100; l /= 100;
+      const k = n => (n + h/30) % 12;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+      return [Math.round(255*f(0)), Math.round(255*f(8)), Math.round(255*f(4))];
+    }
+
+    function rgbToHex(r,g,b) {
+      const toHex = v => v.toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+    }
+
+    function pickTextColorForHsl(h, s, l) {
+      // рассчитываем контраст — чёрный/белый текст относительно фона
+      let [r,g,b] = hslToRgb(h,s,l);
+      [r,g,b] = [r,g,b].map(v => v/255);
+      const lin = x => (x <= 0.03928 ? x/12.92 : Math.pow((x+0.055)/1.055, 2.4));
+      const [R,G,B] = [lin(r),lin(g),lin(b)];
+      const Y = 0.2126*R + 0.7152*G + 0.0722*B;
+      return (Y > 0.55) ? '#000000' : '#FFFFFF';
+    }
+
+    function hexFromHandle(handle) {
+      const {h,s,l} = handleToHSL(handle, SALT);
+      const [r,g,b] = hslToRgb(h,s,l);
+      return { hex: rgbToHex(r,g,b), h,s,l };
+    }
+
+    // ---------- DOM ----------
+    const elHandle = document.getElementById('handle');
+    const elGo     = document.getElementById('goBtn');
+    const stepInput  = document.getElementById('stepInput');
+    const stepResult = document.getElementById('stepResult');
+    const resultBox  = stepResult.querySelector('.result');
+    const hexBox   = document.getElementById('hexBox');
+    const btnPfp   = document.getElementById('btnPfp');
+    const btnBanner= document.getElementById('btnBanner');
+
+    function applyColorForHandle(handle) {
+      const clean = normHandle(handle);
+      if (!clean) return;
+      const { hex, h, s, l } = hexFromHandle(clean);
+
+      // перекрашиваем фон
+      document.body.style.backgroundColor = hex;
+
+      // меняем цвет текста для контраста
+      const fg = pickTextColorForHsl(h,s,l);
+      document.documentElement.style.setProperty('--fg', fg);
+      document.documentElement.style.setProperty('--bg', hex);
+
+      // обновляем подпись
+      hexBox.textContent = `your hex is ${hex}`;
+
+      // показываем блок результата
+      resultBox.style.display = 'flex';
+
+      // готовим генераторы скачиваний
+      btnPfp.onclick = () => downloadSolidPng(`${clean}_pfp_${hex.slice(1)}.png`, 400, 400, hex);
+      btnBanner.onclick = () => downloadSolidPng(`${clean}_banner_${hex.slice(1)}.png`, 1500, 500, hex);
+    }
+
+    function downloadSolidPng(filename, w, h, hex) {
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = hex;
+      ctx.fillRect(0,0,w,h);
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = filename;
+      a.click();
+      canvas.remove();
+    }
+
+    function onSubmit() {
+      const v = elHandle.value;
+      if (!v.trim()) return;
+      applyColorForHandle(v);
+      // прячем подсказку/инпут визуально (вводить можно снова)
+      stepInput.style.opacity = .35;
+    }
+
+    elGo.addEventListener('click', onSubmit);
+    elHandle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') onSubmit();
+      else {
+        // как только юзер печатает — снова показываем инпут ярче и скрываем результат
+        resultBox.style.display = 'none';
+        stepInput.style.opacity = 1;
+        document.body.style.backgroundColor = 'var(--bg)';
+      }
+    });
+
+    // опционально: поддержка deep-link ?handle=nick
+    const params = new URLSearchParams(location.search);
+    if (params.has('handle')) {
+      elHandle.value = params.get('handle');
+      applyColorForHandle(elHandle.value);
+      stepInput.style.opacity = .35;
+    }
+  </script>
+</body>
+</html>
