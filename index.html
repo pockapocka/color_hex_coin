@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>$HEX</title>
+  <title>$RGB</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet" />
@@ -94,11 +94,11 @@
     <!-- Hidden until a result exists -->
     <div id="stepResult" class="card" style="display:none;">
       <div class="result" style="display:none;">
-        <div id="hexBox" class="hex">your hex is #______</div>
+        <div id="hexBox" class="hex">your $RGB is #______</div>
         <div class="btnRow" style="margin-top:14px;">
           <button id="btnPfp" type="button">download pfp</button>
           <button id="btnBanner" type="button">download banner</button>
-          <button id="btnBadge" type="button">download hex badge</button>
+          <button id="btnBadge" type="button">download $RGB badge</button>
         </div>
       </div>
     </div>
@@ -188,7 +188,7 @@
       document.documentElement.style.setProperty('--bg', hex);
 
       // update label
-      hexBox.textContent = `your hex is ${hex}`;
+      hexBox.textContent = `your $RGB is ${hex}`;
 
       // show result containers (they start hidden)
       stepResult.style.display = 'block';
