@@ -218,10 +218,19 @@
     /* add top padding so content isn't hidden under the fixed header */
     body{ padding-top: 72px; }
 
-  </style>
+  
+    /* --- Logo sizing & layout (added) --- */
+    .brand { gap: 10px; } /* ensure space between logo and wordmark */
+    .brand .logo{
+      height: 2em;          /* match computed font-size */
+      width: auto;
+      display: block;       /* crisp sizing in flex */
+    }
+    .brand .wordmark{ line-height: 1; }
+</style>
 </head>
 <body>
-  <header class="brand" role="banner">$PUMPKER</header>
+  <header class="brand" role="banner"><img src="pumpker.png" alt="$PUMPKER logo" class="logo" loading="eager"><span class="wordmark">$PUMPKER</span></header>
   <main class="wrap">
     <!-- LEFT: PAY TABLE -->
     <section class="paytable" aria-labelledby="paytableTitle">
