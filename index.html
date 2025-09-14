@@ -1,303 +1,472 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>$RGB</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>$PUMPKER</title>
+  <meta property="og:title" content="$PUMPKER" />
+  <meta property="og:site_name" content="$PUMPKER" />
+  <meta name="twitter:title" content="$PUMPKER" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Crect%20width%3D%2764%27%20height%3D%2764%27%20fill%3D%27%23084042%27/%3E%3Ctext%20x%3D%2750%25%27%20y%3D%2750%25%27%20dy%3D%27.3em%27%20text-anchor%3D%27middle%27%20font-size%3D%2744%27%20font-family%3D%27Inter%2CArial%2CHelvetica%2Csans-serif%27%20fill%3D%27%23ffffff%27%3E%24%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Ultra‑simple one‑page video poker with adjustable bet, credits, pay table, and five card slots." />
   <style>
-    :root {
-      --bg: #000000;
-      --fg: #ffffff;
-      --muted: #9ca3af;
-      --transition: 260ms cubic-bezier(.2,.7,.2,1);
-      --radius: 14px;
+    :root{
+      --blue:#084042;            /* deep retro blue */
+      --white:#ffffff;
+      --ui:#ff3b30;              /* action red */
+      --ui-press:#c62c24;
+      --card:#f4f6fb;
+      --ink:#0b1020;
+      --muted:#94a3b8;
+      --gap:14px;
     }
-    * { box-sizing: border-box; }
-    html,body { height: 100%; }
-    body {
-      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg); color: var(--fg);
-      transition: background-color var(--transition), color var(--transition);
-      min-height: 100dvh;
-      display: grid;
-      grid-template-rows: auto 1fr;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--blue);
+      color:var(--white);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      letter-spacing: .5px;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
     }
-    header {
-      display: grid;
-      place-items: center;
-      padding-top: 20px;
+    .wrap{
+      width:min(1100px, 100%);
+      padding:24px 18px 30px;
+      display:grid;
+      grid-template-columns: minmax(260px, 0.6fr) minmax(820px, 1.4fr);
+      gap: 24px;
     }
-    .brand {
-      font-weight: 900; letter-spacing: 0.02em; margin: 0;
-      line-height: 1; text-align: center; user-select: none;
-      font-size: clamp(44px, 10vw, 128px);
+    /* PAYTABLE (left) */
+    .paytable{
+      border:3px solid var(--white);
+      padding:18px 16px;
+      border-radius:10px;
+      min-height: 360px;
+      position:relative;
     }
-    .main {
-      display: grid;
-      align-content: center; /* vertical center */
-      justify-items: center; /* horizontal center */
-      padding: 24px;
-      gap: 20px;
+    .paytable h2{
+      margin:0 0 8px 0;
+      font-size:20px;
+      letter-spacing:1.2px;
     }
-    .card {
-      width: min(860px, 100%);
-      margin: 0 auto; padding: 18px; border-radius: var(--radius);
-      background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.12);
-      box-shadow: 0 10px 40px rgba(0,0,0,.35); backdrop-filter: blur(8px);
+    .payout-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 4px;
+      border-bottom:1px dashed rgba(255,255,255,.25);
+      font-size:20px;
     }
-    .inputRow {
-      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+    .payout-row:last-child{border-bottom:0}
+    .payout-name{font-weight:700}
+    .payout-amt{min-width:72px; text-align:right; font-weight:800}
+    .small-note{color:rgba(255,255,255,.7); font-size:12px; margin-top:6px}
+    /* RIGHT SIDE (status + controls) */
+    .status{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
     }
-    input {
-      width: 100%; padding: 16px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.06); color: var(--fg); font-size: 18px; outline: none;
-      transition: border-color var(--transition), background var(--transition);
+    .stat{
+      background:rgba(255,255,255,.12);
+      border:2px solid var(--white);
+      padding:10px 12px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:18px;
+      font-weight:800;
+      min-width: 130px;
+      justify-content:space-between;
     }
-    input::placeholder { color: rgba(255,255,255,.6); }
-    input:focus { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.1); }
-    button {
-      padding: 16px 18px; border-radius: 12px; border: 0; cursor: pointer;
-      background: var(--fg); color: var(--bg); font-weight: 800; font-size: 16px;
-      transition: transform 120ms ease, box-shadow 120ms ease, opacity var(--transition);
-      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    .stat .label{opacity:.85}
+    .stat .value{font-weight:900; font-size:20px}
+    /* CARD STRIP */
+    .table{
+      border:3px solid var(--white);
+      border-radius:14px;
+      padding:14px;
+      display:flex;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+      background:rgba(255,255,255,.06);
     }
-    button:hover { transform: translateY(-1px); }
-    .hex {
-      font-weight: 800; font-size: 28px; padding: 12px 16px; border-radius: 12px;
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    .cards{
+      display:flex;
+      gap:12px;
+      flex:1;
+      min-width: 540px;
     }
-    .btnRow { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-    @media (max-width: 520px) {
-      .hex { font-size: 22px; }
-      button { width: 100%; }
-      .inputRow { grid-template-columns: 1fr; }
+    .card{
+      width:150px;
+      height:210px;
+      background:var(--card);
+      color:var(--ink);
+      border-radius:16px;
+      border:6px solid var(--white);
+      box-shadow: 0 2px 0 rgba(0,0,0,.25);
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      padding:10px;
+      text-align:center;
+      user-select:none;
     }
+    .card .rank{font-size:36px; font-weight:900; line-height:1}
+    .card .suit{font-size:42px; font-weight:900; line-height:1.2}
+    .card .corner{
+      font-size:18px; font-weight:800;
+      opacity:.9;
+    }
+    .controls{
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      gap:10px;
+      width: 220px;
+      min-width:220px;
+    }
+    .bet-stepper{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items:center;
+      gap:10px;
+    }
+    .bet-display{
+      background:rgba(255,255,255,.12);
+      border:2px solid var(--white);
+      border-radius:10px;
+      text-align:center;
+      padding:10px 6px;
+      font-weight:900;
+      font-size:20px;
+    }
+    button{
+      appearance:none;
+      border:none;
+      background:var(--ui);
+      color:var(--white);
+      padding:12px 14px;
+      font-weight:900;
+      border-radius:12px;
+      cursor:pointer;
+      letter-spacing:1px;
+      box-shadow: 0 4px 0 var(--ui-press);
+      transition: transform .02s ease, box-shadow .02s ease, filter .2s ease;
+    }
+    button:hover{filter:brightness(1.05)}
+    button:active{transform: translateY(2px); box-shadow: 0 2px 0 var(--ui-press);}
+    .btn-ghost{
+      background:transparent;
+      box-shadow:none;
+      border:2px solid var(--white);
+    }
+    .btn-square{aspect-ratio:1/1}
+    .stack{
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .notice{
+      min-height: 28px;
+      font-weight:800;
+      letter-spacing:.6px;
+      margin-top:6px;
+    }
+    .win{color:#00ff9d}
+    .lose{color:#ffd166}
+    .muted{color:var(--muted)}
+    /* footer */
+    footer{
+      margin-top: 8px;
+      font-size:12px;
+      opacity:.8;
+      text-align:center;
+    }
+    /* Responsive tweaks */
+    @media (max-width: 980px){
+      .wrap{grid-template-columns: 1fr}
+      .controls{width:100%; min-width:unset}
+      .cards{min-width: unset; width:100%; justify-content:space-between}
+      .card{width:18.5vw; max-width:160px; height: 26vw; max-height:220px}
+      .paytable{order:2}
+    }
+  
+    /* --- Brand header (added) --- */
+    .brand{
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 900;
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 0 rgba(0,0,0,.25);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      z-index: 1000;
+    }
+    /* add top padding so content isn't hidden under the fixed header */
+    body{ padding-top: 72px; }
+
   </style>
 </head>
 <body>
-  <header>
-    <h1 class="brand">$RGB</h1>
-  </header>
+  <header class="brand" role="banner">$PUMPKER</header>
+  <main class="wrap">
+    <!-- LEFT: PAY TABLE -->
+    <section class="paytable" aria-labelledby="paytableTitle">
+      <h2 id="paytableTitle">PAY TABLE</h2>
+      <div id="payRows"><!-- rows injected --></div>
+      <div class="small-note">Payouts update with your current bet.</div>
+    </section>
 
-  <section class="main">
-    <div id="stepInput" class="card" role="group" aria-label="Enter twitter handle">
-      <div class="inputRow">
-        <input id="handle" type="text" inputmode="text" autocomplete="off" spellcheck="false"
-               placeholder="enter your twitter nickname" aria-label="twitter nickname"/>
-        <button id="goBtn" type="button" aria-label="go">→</button>
+    <!-- RIGHT: STATUS + TABLE + CONTROLS -->
+    <section>
+      <div class="status">
+        <div class="stat" aria-live="polite" aria-atomic="true"><span class="label">CREDITS</span> <span id="credits" class="value">500</span></div>
+        <div class="stat"><span class="label">BET</span> <span id="betTop" class="value">1</span></div>
       </div>
-    </div>
 
-    <!-- Hidden until a result exists -->
-    <div id="stepResult" class="card" style="display:none;">
-      <div class="result" style="display:none;">
-        <div id="hexBox" class="hex">your $RGB is #______</div>
-        <div class="btnRow" style="margin-top:14px;">
-          <button id="btnPfp" type="button">download pfp</button>
-          <button id="btnBanner" type="button">download banner</button>
-          <button id="btnBadge" type="button">download $RGB badge</button>
+      <div class="table">
+        <div class="cards" id="cards" aria-label="Five card slots">
+          <!-- 5 placeholder cards -->
+        </div>
+
+        <div class="controls">
+          <div class="stack">
+            <div class="bet-stepper" role="group" aria-label="Adjust bet">
+              <button id="minus" class="btn-ghost btn-square" aria-label="Decrease bet">−</button>
+              <div id="betDisplay" class="bet-display" aria-live="polite" aria-atomic="true">1</div>
+              <button id="plus" class="btn-ghost btn-square" aria-label="Increase bet">+</button>
+            </div>
+            <button id="placeBet">PLACE BET</button>
+            <button id="reset" class="btn-ghost">RESET CREDITS</button>
+            <div id="message" class="notice muted">Place a bet to draw.</div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+      
+    </section>
+  </main>
 
-  <script>
-    // ---------- Utils: handle → color (FNV-1a → HSL → HEX) ----------
-    const SALT = 'COLOR_ID_V1'; // change if you want unique colors for your project
+<script>
+  // ---------- CONFIG ----------
+  const START_CREDITS = 500;
+  const MIN_BET = 1;
+  const BASE_PAYOUTS = [
+    { key: 'royal_flush',    name: 'ROYAL FLUSH',     mult: 750 },
+    { key: 'straight_flush', name: 'STRAIGHT FLUSH',  mult: 150 },
+    { key: 'four_kind',      name: '4 OF A KIND',     mult: 240 },
+    { key: 'full_house',     name: 'FULL HOUSE',      mult: 21  },
+    { key: 'flush',          name: 'FLUSH',           mult: 15  },
+    { key: 'straight',       name: 'STRAIGHT',        mult: 12  },
+    { key: 'three_kind',     name: '3 OF A KIND',     mult: 9   },
+    { key: 'two_pair',       name: 'TWO PAIRS',       mult: 6   },
+    { key: 'jacks_or_better',name: 'JACKS OR BETTER', mult: 3   },
+  ];
+  const SUITS = ['♠','♥','♦','♣']; // spade, heart, diamond, club
+  const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  const RANK_VALUE = Object.fromEntries(RANKS.map((r,i)=>[r, i+2]));
 
-    function normHandle(h) {
-      return (h || '')
-        .trim()
-        .normalize('NFKC')
-        .replace(/^@+/, '')
-        .toLowerCase();
+  // ---------- STATE ----------
+  let credits = Number(localStorage.getItem('vp_credits')) || START_CREDITS;
+  let bet = 1;
+  let deck = [];
+
+  // ---------- DOM ----------
+  const $credits = document.getElementById('credits');
+  const $betTop = document.getElementById('betTop');
+  const $betDisplay = document.getElementById('betDisplay');
+  const $minus = document.getElementById('minus');
+  const $plus = document.getElementById('plus');
+  const $placeBet = document.getElementById('placeBet');
+  const $reset = document.getElementById('reset');
+  const $message = document.getElementById('message');
+  const $cards = document.getElementById('cards');
+  const $payRows = document.getElementById('payRows');
+
+  // ---------- INIT UI ----------
+  function makePayTable(){
+    $payRows.innerHTML = '';
+    for(const row of BASE_PAYOUTS){
+      const div = document.createElement('div');
+      div.className = 'payout-row';
+      div.innerHTML = `<span class="payout-name">${row.name}</span><span class="payout-amt" id="payout-${row.key}">0</span>`;
+      $payRows.appendChild(div);
     }
+  }
+  function makeCards(){
+    $cards.innerHTML = '';
+    for(let i=0;i<5;i++){
+      const c = document.createElement('div');
+      c.className='card';
+      c.innerHTML = `<div class="corner rank">?</div>
+                     <div class="suit">•</div>
+                     <div class="corner">?</div>`;
+      $cards.appendChild(c);
+    }
+  }
 
-    function fnv1a32(str) {
-      let h = 0x811c9dc5 >>> 0;
-      for (let i = 0; i < str.length; i++) {
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 0x01000193) >>> 0;
+  // ---------- UTIL ----------
+  function shuffle(array){
+    for(let i = array.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+  function buildDeck(){
+    const d = [];
+    for(const s of SUITS){
+      for(const r of RANKS){
+        d.push({r,s});
       }
-      return h >>> 0;
     }
-
-    function handleToHSL(handle, salt = '') {
-      const s = normHandle(handle) + salt;
-      const h32 = fnv1a32(s);
-      const H = h32 % 360;               // hue 0..359
-      const S = 60 + ((h32 >>> 8) % 20); // 60..79% — juicy but readable
-      const L = 52 + ((h32 >>> 16) % 8); // 52..59% — looks good on light/dark
-      return { h: H, s: S, l: L };
+    return shuffle(d);
+  }
+  function draw(n=5){
+    if(deck.length < n) deck = buildDeck();
+    return deck.splice(0,n);
+  }
+  function setCredits(val){
+    credits = Math.max(0, Math.floor(val));
+    localStorage.setItem('vp_credits', String(credits));
+    $credits.textContent = credits;
+    // clamp bet if needed
+    if(bet > credits) setBet(Math.max(MIN_BET, credits));
+  }
+  function setBet(val){
+    bet = Math.max(MIN_BET, Math.min(Math.floor(val), Math.max(MIN_BET, credits)));
+    $betDisplay.textContent = bet;
+    $betTop.textContent = bet;
+    updatePayouts();
+  }
+  function updatePayouts(){
+    for(const row of BASE_PAYOUTS){
+      const amt = row.mult * bet;
+      const cell = document.getElementById('payout-'+row.key);
+      if(cell) cell.textContent = String(amt);
     }
-
-    function hslToRgb(h, s, l) {
-      s /= 100; l /= 100;
-      const k = n => (n + h/30) % 12;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
-      return [Math.round(255*f(0)), Math.round(255*f(8)), Math.round(255*f(4))];
-    }
-
-    function rgbToHex(r,g,b) {
-      const toHex = v => v.toString(16).padStart(2, '0');
-      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
-    }
-
-    function pickTextColorForHsl(h, s, l) {
-      // choose black/white text on top of background for contrast
-      let [r,g,b] = hslToRgb(h,s,l);
-      [r,g,b] = [r,g,b].map(v => v/255);
-      const lin = x => (x <= 0.03928 ? x/12.92 : Math.pow((x+0.055)/1.055, 2.4));
-      const [R,G,B] = [lin(r),lin(g),lin(b)];
-      const Y = 0.2126*R + 0.7152*G + 0.0722*B;
-      return (Y > 0.55) ? '#000000' : '#FFFFFF';
-    }
-
-    function hexFromHandle(handle) {
-      const {h,s,l} = handleToHSL(handle, SALT);
-      const [r,g,b] = hslToRgb(h,s,l);
-      return { hex: rgbToHex(r,g,b), h,s,l };
-    }
-
-    // ---------- DOM (declare ONCE) ----------
-    const elHandle = document.getElementById('handle');
-    const elGo     = document.getElementById('goBtn');
-    const stepInput  = document.getElementById('stepInput');
-    const stepResult = document.getElementById('stepResult');
-    const resultBox  = stepResult.querySelector('.result');
-    const hexBox   = document.getElementById('hexBox');
-    const btnPfp   = document.getElementById('btnPfp');
-    const btnBanner= document.getElementById('btnBanner');
-    const btnBadge = document.getElementById('btnBadge');
-
-    function applyColorForHandle(handle) {
-      const clean = normHandle(handle);
-      if (!clean) return;
-      const { hex, h, s, l } = hexFromHandle(clean);
-
-      // repaint background
-      document.body.style.backgroundColor = hex;
-
-      // text color for contrast
-      const fg = pickTextColorForHsl(h,s,l);
-      document.documentElement.style.setProperty('--fg', fg);
-      document.documentElement.style.setProperty('--bg', hex);
-
-      // update label
-      hexBox.textContent = `your $RGB is ${hex}`;
-
-      // show result containers (they start hidden)
-      stepResult.style.display = 'block';
-      resultBox.style.display = 'flex';
-
-      // downloads
-      btnPfp.onclick = () => downloadSolidPng(`${clean}_pfp_${hex.slice(1)}.png`, 400, 400, hex);
-      btnBanner.onclick = () => downloadSolidPng(`${clean}_banner_${hex.slice(1)}.png`, 1500, 500, hex);
-      btnBadge.onclick = () => downloadHexBadge(`${clean}_hex_badge_${hex.slice(1)}.png`, 1080, 1080, hex, clean, h, s, l);
-    }
-
-    function downloadSolidPng(filename, w, h, hex) {
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = hex;
-      ctx.fillRect(0,0,w,h);
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = filename;
-      a.click();
-      canvas.remove();
-    }
-
-    function downloadHexBadge(filename, w, h, hex, handleClean, hH, sH, lH) {
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-
-      // background
-      ctx.fillStyle = hex;
-      ctx.fillRect(0,0,w,h);
-
-      // text color (black/white for contrast) using provided HSL
-      const textColor = pickTextColorForHsl(hH, sH, lH);
-
-      // lines
-      const line1 = "MY HEX IS";
-      const line2 = hex;
-      const handleTxt = '@' + handleClean;
-
-      ctx.fillStyle = textColor;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      // big hex line (center)
-      const font2 = fitText(ctx, line2, w*0.82, 200, 64);
-      ctx.font = `800 ${font2}px Inter, system-ui, sans-serif`;
-      ctx.fillText(line2, w/2, h*0.58);
-
-      // top line "MY HEX IS" above
-      const font1 = Math.max(44, Math.round(font2 * 0.34));
-      ctx.font = `700 ${font1}px Inter, system-ui, sans-serif`;
-      ctx.globalAlpha = 0.95;
-      ctx.fillText(line1, w/2, h*0.38);
-      ctx.globalAlpha = 1;
-
-      // handle in top-left with padding, always prefixed with @
-      const pad = 56;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      const handleMaxWidth = w * 0.7;
-      const handleFont = fitText(ctx, handleTxt, handleMaxWidth, 80, 28);
-      ctx.font = `700 ${handleFont}px Inter, system-ui, sans-serif`;
-      ctx.fillText(handleTxt, pad, pad);
-
-      // download
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = filename;
-      a.click();
-      canvas.remove();
-    }
-
-    function fitText(ctx, text, maxWidth, maxPx, minPx) {
-      // binary search font size to fit width
-      let hi = maxPx, lo = minPx;
-      while (hi - lo > 1) {
-        const mid = Math.floor((hi + lo)/2);
-        ctx.font = `800 ${mid}px Inter, system-ui, sans-serif`;
-        const w = ctx.measureText(text).width;
-        if (w > maxWidth) hi = mid; else lo = mid;
-      }
-      return lo;
-    }
-
-    function onSubmit() {
-      const v = elHandle.value;
-      if (!v.trim()) return;
-      applyColorForHandle(v);
-    }
-
-    elGo.addEventListener('click', onSubmit);
-    elHandle.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') onSubmit();
-      else {
-        // while typing, hide result and reset bg
-        resultBox.style.display = 'none';
-        stepResult.style.display = 'none';
-        document.body.style.backgroundColor = 'var(--bg)';
-      }
+  }
+  function renderHand(cards){
+    const els = $cards.querySelectorAll('.card');
+    cards.forEach((c, i)=>{
+      const el = els[i];
+      const color = (c.s==='♥' || c.s==='♦') ? '#e11d48' : '#111827';
+      el.style.color = '#0b1020';
+      el.querySelector('.rank').textContent = c.r;
+      el.querySelector('.suit').textContent = c.s;
+      el.querySelector('.corner:last-child').textContent = c.r + c.s;
+      el.style.setProperty('--card-ink', color);
+      el.style.color = color;
     });
+  }
 
-    // optional: deep-link support ?handle=nick
-    const params = new URLSearchParams(location.search);
-    if (params.has('handle')) {
-      elHandle.value = params.get('handle');
-      applyColorForHandle(elHandle.value);
+  // ---------- HAND EVAL (Jacks or Better) ----------
+  function evaluateHand(cards){
+    // counts
+    const ranks = cards.map(c => RANK_VALUE[c.r]).sort((a,b)=>a-b);
+    const suits = cards.map(c => c.s);
+    const isFlush = suits.every(s => s === suits[0]);
+
+    // straight check (handle A-low)
+    let isStraight = false;
+    let high = Math.max(...ranks);
+    const uniq = [...new Set(ranks)];
+    if(uniq.length === 5){
+      if(high - Math.min(...ranks) === 4){
+        isStraight = true;
+      }else if(JSON.stringify(uniq) === JSON.stringify([2,3,4,5,14])){
+        isStraight = true;
+        high = 5; // treat A as low
+      }
     }
-  </script>
+
+    const freq = {};
+    for(const v of ranks) freq[v] = (freq[v]||0)+1;
+    const groups = Object.values(freq).sort((a,b)=>b-a); // e.g., [3,2]
+    const has4 = groups[0]===4;
+    const has3 = groups[0]===3;
+    const pairs = groups.filter(g=>g===2).length;
+
+    // determine result
+    let key = null;
+    if(isStraight && isFlush){
+      // royal if 10,J,Q,K,A (high=14) and includes 10
+      if(high===14 && ranks.includes(10)) key = 'royal_flush';
+      else key = 'straight_flush';
+    }else if(has4){
+      key = 'four_kind';
+    }else if(has3 && pairs===1){
+      key = 'full_house';
+    }else if(isFlush){
+      key = 'flush';
+    }else if(isStraight){
+      key = 'straight';
+    }else if(has3){
+      key = 'three_kind';
+    }else if(pairs===2){
+      key = 'two_pair';
+    }else if(pairs===1){
+      // detect high pair (Jacks or Better)
+      const pairRank = Number(Object.keys(freq).find(k => freq[k]==2));
+      if(pairRank>=11 || pairRank===14) key = 'jacks_or_better';
+    }
+    return key; // null if no win
+  }
+
+  // ---------- INTERACTION ----------
+  $minus.addEventListener('click', ()=> setBet(bet - 1));
+  $plus.addEventListener('click', ()=> setBet(bet + 1));
+
+  $reset.addEventListener('click', ()=>{
+    setCredits(START_CREDITS);
+    setBet(1);
+    $message.textContent = 'Credits reset.';
+    $message.className = 'notice';
+  });
+
+  $placeBet.addEventListener('click', ()=>{
+    if(credits < bet){
+      $message.textContent = 'Not enough credits.';
+      $message.className = 'notice lose';
+      return;
+    }
+    setCredits(credits - bet);
+    const hand = draw(5);
+    renderHand(hand);
+    const winKey = evaluateHand(hand);
+
+    if(winKey){
+      const row = BASE_PAYOUTS.find(r=>r.key===winKey);
+      const payout = row.mult * bet;
+      setCredits(credits + payout);
+      $message.textContent = `WIN — ${row.name} (+${payout})`;
+      $message.className = 'notice win';
+    }else{
+      $message.textContent = 'No win. Try again!';
+      $message.className = 'notice lose';
+    }
+  });
+
+  // ---------- BOOT ----------
+  (function boot(){
+    makePayTable();
+    makeCards();
+    setCredits(credits);
+    setBet(1);
+    updatePayouts();
+  })();
+</script>
 </body>
 </html>
